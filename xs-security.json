@@ -1,0 +1,83 @@
+{
+    "xsappname": "back_caio",
+    "tenant-mode": "dedicated",
+    "scopes": [
+        {
+            "name": "uaa.user",
+            "description": "UAA"
+        },
+        {
+            "name": "$XSAPPNAME.User",
+            "description": "User"
+        },
+        {
+            "name": "$XSAPPNAME.Admin",
+            "description": "Administrator"
+        }
+    ],
+    "attributes": [
+        {
+            "name": "Region",
+            "description": "Region",
+            "valueType": "string"
+        }
+    ],
+    "role-templates": [
+        {
+            "name": "Token_Exchange",
+            "description": "UAA Token Exchange",
+            "scope-references": [
+                "uaa.user"
+            ]
+        },
+        {
+            "name": "User",
+            "description": "User",
+            "attribute-references": [
+                {
+                    "name": "Region"
+                }
+            ],
+            "scope-references": [
+                "$XSAPPNAME.User"
+            ]
+        },
+        {
+            "name": "Admin",
+            "description": "Administrator",
+            "scope-references": [
+                "$XSAPPNAME.Admin"
+            ]
+        }
+    ],
+    "role-collections": [
+        {
+            "name": "back_caio-Administrator",
+            "description": "Administrative access",
+            "role-template-references": [
+                "$XSAPPNAME.Admin"
+            ]
+        },
+        {
+            "name": "back_caio-User",
+            "description": "User",
+            "role-template-references": [
+                "$XSAPPNAME.User"
+            ]
+        },
+        {
+            "name": "back_caio-Token",
+            "description": "UAA Token Exchange",
+            "role-template-references": [
+                "$XSAPPNAME.Token_Exchange"
+            ]
+        }
+    ],
+    "oauth2-configuration": {
+        "token-validity": 3600,
+        "redirect-uris": [
+            "https://bb7e5486trial.authentication.us10.hana.ondemand.com/login",
+            "https://bb7e5486trial-dev-app.cfapps.us10.hana.ondemand.com/"
+        ]
+    }
+}

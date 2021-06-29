@@ -1,0 +1,80 @@
+_schema-version: '3.1'
+ID: back_caio
+version: 1.0.0
+description: A simple CAP project.
+parameters:
+  enable-parallel-deployments: true
+build-parameters:
+  before-all:
+    - builder: custom
+      commands:
+        - npm install --production
+        - npx -p @sap/cds-dk cds build --production
+modules:
+  - name: back_caio-srv
+    type: nodejs
+    path: gen/srv
+    requires:
+      - name: back_caio-uaa
+      - name: back_caio-db
+    provides:
+      - name: srv-api
+        properties:
+          srv-url: '${default-url}'
+    properties:
+      SAP_JWT_TRUST_ACL:
+         - clientid: "*"
+           identityzone: "*" 
+  - name: app
+    type: approuter.nodejs
+    path: app
+    parameters:
+      memory: 256M
+      disk-quota: 1024M
+    requires:
+      - name: back_caio-uaa
+      - name: srv-api
+        group: destinations
+        properties:
+          name: srv_api
+          url: '~{srv-url}'
+          timeout: 60000
+          forwardAuthToken: true  
+      - name: srv
+        group: destinations
+        properties:
+          name: srv_api_v2
+          url: 'https://bb7e5486trial-dev-back-caio-srv.cfapps.us10.hana.ondemand.com/v2'
+          timeout: 60000
+          forwardAuthToken: true
+    provides:
+      - name: srv
+    properties:
+      name: srv_api_v2
+      url: 'https://bb7e5486trial-dev-back-caio-srv.cfapps.us10.hana.ondemand.com/v2'
+      timeout: 60000
+      forwardAuthToken: true 
+      SAP_JWT_TRUST_ACL:
+        - clientid: "*"
+          identityzone: "*"
+  - name: back_caio-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: back_caio-db
+resources:
+  - name: back_caio-uaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      path: ./xs-security.json
+  - name: back_caio-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
+    properties:
+      hdi-service-name: '${service-name}'
